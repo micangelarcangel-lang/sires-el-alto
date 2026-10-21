@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIRES Bolivia — Sala de situación</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { background-color: #0d233a; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { padding: 15px 20px 10px 20px; background: #0b1c2e; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    p.subtext { font-size: 13px; color: #cbd5e1; }
+    .controls { background: #ffffff; color: #000000; padding: 10px 20px; display: flex; gap: 20px; align-items: center; border-bottom: 1px solid #ccc; }
+    .filter-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    select { padding: 4px 8px; font-size: 14px; border: 1px solid #aaa; border-radius: 4px; }
+    #map-container { flex: 1; position: relative; }
+    #map { width: 100%; height: 100%; background: #aadaff; }
+    footer { background: #e2e8f0; color: #334155; padding: 8px 20px; font-size: 12px; border-top: 1px solid #cbd5e1; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>SIRES Bolivia — Sala de situación</h1>
+    <p class="subtext">Los puntos pueden ser aproximados si proceden de una mención textual; verificar antes de decisiones operativas.</p>
+  </header>
+
+  <div class="controls">
+    <div class="filter-item">
+      <label>Departamento</label>
+      <select id="filter-dept" onchange="aplicarFiltros()">
+        <option value="todos">Todos</option>
+        <option value="La Paz">La Paz / El Alto</option>
+        <option value="Santa Cruz">Santa Cruz</option>
+        <option value="Cochabamba">Cochabamba</option>
+        <option value="Beni">Beni</option>
+        <option value="Pando">Pando</option>
+        <option value="Oruro">Oruro</option>
+        <option value="Potosí">Potosí</option>
+        <option value="Chuquisaca">Chuquisaca</option>
+        <option value="Tarija">Tarija</option>
+      </select>
+    </div>
+
+    <div class="filter-item">
+      <label>Tipo</label>
+      <select id="filter-tipo" onchange="aplicarFiltros()">
+        <option value="todos">Todos</option>
+        <option value="sismo">Sismo / GDACS</option>
+        <option value="fuego">Foco de calor / Incendio</option>
+        <option value="prensa">Noticia / Prensa</option>
+      </select>
+    </div>
+
+    <div class="filter-item">
+      <label>Fuente</label>
+      <select id="filter-fuente" onchange="aplicarFiltros()">
+        <option value="todas">Todas</option>
+        <option value="Red Uno">Red Uno</option>
+        <option value="GDACS">GDACS</option>
+        <option value="NASA FIRMS">NASA FIRMS</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+
+  <footer>
+    <span id="stat-text">Cargando datos del sistema...</span>
+  </footer>
+
+  <script>
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfyeby9SQYOOdZqdrAAX-bAX6L-U9fpLvwCPfOz20G8WeHX3vHtMFwbZq_7Zhp4W-U7F0OEcA/exec";
+    let map, markers = [];
+    
+    let registrosBase = [
+      { id: "1", dept: "La Paz", tipo: "prensa", fuente: "Red Uno", titulo: "Distribuidores de GLP prevén normalizar abastecimiento en La Paz", lugar: "La Paz, La Paz", fecha: "2026-10-21 02:44:38", lat: -16.500, lng: -68.150, detalles: "Coordenada aproximada por mención textual. Verificar antes de uso operativo." },
+      { id: "2", dept: "La Paz", tipo: "fuego", fuente: "NASA FIRMS", titulo: "Alerta de Foco de Calor en zona periurbana de El Alto", lugar: "El Alto, La Paz", fecha: "2026-10-21 01:15:00", lat: -16.510, lng: -68.190, detalles: "Anomalía térmica VIIRS detectada." },
+      { id: "3", dept: "Santa Cruz", tipo: "prensa", fuente: "Red Uno", titulo: "Monitoreo de precipitaciones e inundaciones en Chiquitania", lugar: "Santa Cruz", fecha: "2026-10-20 22:10:00", lat: -17.783, lng: -63.182, detalles: "Reporte preventivo de emergencia." }
+    ];
+
+    function initMap() {
+      map = L.map('map').setView([-16.500, -64.500], 6);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'MapData &copy; OpenStreetMap'
+      }).addTo(map);
+
+      cargarBackend();
+    }
+
+    function renderizar(datos) {
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      datos.forEach(item => {
+        let marker = L.circleMarker([item.lat, item.lng], {
+          radius: 9,
+          fillColor: "#ef4444",
+          color: "#ffffff",
+          weight: 2,
+          fillOpacity: 0.85
+        }).addTo(map);
+
+        marker.bindPopup(`
+          <div style="font-size:13px; max-width:240px;">
+            <b style="font-size:14px;">${item.titulo}</b><br>
+            <span style="color:#555;">${item.lugar}</span><br>
+            <small style="color:#777;">${item.fuente} · ${item.fecha}</small><br>
+            <p style="margin-top:6px; font-size:11px; color:#444;">${item.detalles}</p>
+          </div>
+        `);
+
+        markers.push(marker);
+      });
+
+      document.getElementById('stat-text').innerText = 
+        `Registros: ${registrosBase.length} totales | ${datos.length} tras filtros | ${markers.length} puntos dibujados. No equivale a incidentes confirmados.`;
+    }
+
+    function aplicarFiltros() {
+      const d = document.getElementById('filter-dept').value;
+      const t = document.getElementById('filter-tipo').value;
+      const f = document.getElementById('filter-fuente').value;
+
+      let filtrados = registrosBase.filter(r => {
+        let matchD = (d === 'todos' || r.dept.includes(d));
+        let matchT = (t === 'todos' || r.tipo === t);
+        let matchF = (f === 'todas' || r.fuente === f);
+        return matchD && matchT && matchF;
+      });
+
+      renderizar(filtrados);
+    }
+
+    function cargarBackend() {
+      fetch(BACKEND_URL)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            registrosBase = data;
+          }
+          aplicarFiltros();
+        })
+        .catch(() => aplicarFiltros());
+    }
+
+    window.onload = initMap;
+  </script>
+</body>
+</html>
