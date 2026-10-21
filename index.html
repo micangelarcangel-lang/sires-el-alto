@@ -1,155 +1,235 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIRES Bolivia — Sala de situación</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    body { background-color: #0d233a; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    header { padding: 15px 20px 10px 20px; background: #0b1c2e; }
-    h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-    p.subtext { font-size: 13px; color: #cbd5e1; }
-    .controls { background: #ffffff; color: #000000; padding: 10px 20px; display: flex; gap: 20px; align-items: center; border-bottom: 1px solid #ccc; }
-    .filter-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-    select { padding: 4px 8px; font-size: 14px; border: 1px solid #aaa; border-radius: 4px; }
-    #map-container { flex: 1; position: relative; }
-    #map { width: 100%; height: 100%; background: #aadaff; }
-    footer { background: #e2e8f0; color: #334155; padding: 8px 20px; font-size: 12px; border-top: 1px solid #cbd5e1; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UGRED - CCESN | Sala Situacional Nacional</title>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- html2pdf para generación de Reportes en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Chart.js para Gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --accent-red: #ef4444;
+            --accent-orange: #f97316;
+            --accent-yellow: #eab308;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        header {
+            background-color: #090d16;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #b91c1c;
+        }
+        .header-title { display: flex; align-items: center; gap: 12px; }
+        .header-title h1 { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
+        .header-title span { font-size: 0.75rem; background: #b91c1c; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-pdf {
+            background: #b91c1c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-pdf:hover { background: #dc2626; }
+
+        .main-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
+
+        .sidebar {
+            width: 380px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .card { background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
+        .card-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .kpi-box { background: #1e293b; padding: 8px; border-radius: 4px; text-align: center; border-left: 3px solid var(--accent-blue); }
+        .kpi-box.danger { border-left-color: var(--accent-red); }
+        .kpi-box.warning { border-left-color: var(--accent-orange); }
+        .kpi-value { font-size: 1.2rem; font-weight: bold; }
+        .kpi-label { font-size: 0.65rem; color: var(--text-muted); }
+
+        .filter-group select {
+            width: 100%;
+            background: #1e293b;
+            color: white;
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+        }
+
+        .map-container { flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; background: #0b0f19; }
+        .chart-container { position: relative; height: 140px; width: 100%; }
+    </style>
 </head>
 <body>
 
-  <header>
-    <h1>SIRES Bolivia — Sala de situación</h1>
-    <p class="subtext">Los puntos pueden ser aproximados si proceden de una mención textual; verificar antes de decisiones operativas.</p>
-  </header>
+    <header>
+        <div class="header-title">
+            <h1>UGRED — Centro de Coordinación de Emergencias en Salud Nacional</h1>
+            <span>CCESN</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-pdf" onclick="generarReportePDF()">
+                <i class="fa-solid fa-file-pdf"></i> Generar SpotRep PDF
+            </button>
+        </div>
+    </header>
 
-  <div class="controls">
-    <div class="filter-item">
-      <label>Departamento</label>
-      <select id="filter-dept" onchange="aplicarFiltros()">
-        <option value="todos">Todos</option>
-        <option value="La Paz">La Paz / El Alto</option>
-        <option value="Santa Cruz">Santa Cruz</option>
-        <option value="Cochabamba">Cochabamba</option>
-        <option value="Beni">Beni</option>
-        <option value="Pando">Pando</option>
-        <option value="Oruro">Oruro</option>
-        <option value="Potosí">Potosí</option>
-        <option value="Chuquisaca">Chuquisaca</option>
-        <option value="Tarija">Tarija</option>
-      </select>
+    <div class="main-container" id="reporte-content">
+        <aside class="sidebar">
+            <div class="card">
+                <div class="card-title">Alertas por Nivel de Riesgo Municipal</div>
+                <div class="kpi-grid">
+                    <div class="kpi-box danger">
+                        <div class="kpi-value" id="kpi-rojo">0</div>
+                        <div class="kpi-label">Riesgo Alto</div>
+                    </div>
+                    <div class="kpi-box warning">
+                        <div class="kpi-value" id="kpi-naranja">0</div>
+                        <div class="kpi-label">Riesgo Medio</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-value" id="kpi-amarillo">0</div>
+                        <div class="kpi-label">Bajo / Monitoreo</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Filtro Territorial</div>
+                <div class="filter-group">
+                    <select id="filter-dept" onchange="aplicarFiltros()">
+                        <option value="todos">Todos los Departamentos</option>
+                        <option value="La Paz">La Paz</option>
+                        <option value="Santa Cruz">Santa Cruz</option>
+                        <option value="Cochabamba">Cochabamba</option>
+                        <option value="Beni">Beni</option>
+                        <option value="Pando">Pando</option>
+                        <option value="Oruro">Oruro</option>
+                        <option value="Potosí">Potosí</option>
+                        <option value="Chuquisaca">Chuquisaca</option>
+                        <option value="Tarija">Tarija</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Consolidado por Tipo de Evento</div>
+                <div class="chart-container">
+                    <canvas id="chartTipos"></canvas>
+                </div>
+            </div>
+        </aside>
+
+        <main class="map-container">
+            <div id="map"></div>
+        </main>
     </div>
 
-    <div class="filter-item">
-      <label>Tipo</label>
-      <select id="filter-tipo" onchange="aplicarFiltros()">
-        <option value="todos">Todos</option>
-        <option value="sismo">Sismo / GDACS</option>
-        <option value="fuego">Foco de calor / Incendio</option>
-        <option value="prensa">Noticia / Prensa</option>
-      </select>
-    </div>
+    <script>
+        const map = L.map('map').setView([-16.2902, -63.5887], 6);
 
-    <div class="filter-item">
-      <label>Fuente</label>
-      <select id="filter-fuente" onchange="aplicarFiltros()">
-        <option value="todas">Todas</option>
-        <option value="Red Uno">Red Uno</option>
-        <option value="GDACS">GDACS</option>
-        <option value="NASA FIRMS">NASA FIRMS</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="map-container">
-    <div id="map"></div>
-  </div>
-
-  <footer>
-    <span id="stat-text">Cargando datos del sistema...</span>
-  </footer>
-
-  <script>
-    const BACKEND_URL = "https://script.google.com/macros/s/AKfyeby9SQYOOdZqdrAAX-bAX6L-U9fpLvwCPfOz20G8WeHX3vHtMFwbZq_7Zhp4W-U7F0OEcA/exec";
-    let map, markers = [];
-    
-    let registrosBase = [
-      { id: "1", dept: "La Paz", tipo: "prensa", fuente: "Red Uno", titulo: "Distribuidores de GLP prevén normalizar abastecimiento en La Paz", lugar: "La Paz, La Paz", fecha: "2026-10-21 02:44:38", lat: -16.500, lng: -68.150, detalles: "Coordenada aproximada por mención textual. Verificar antes de uso operativo." },
-      { id: "2", dept: "La Paz", tipo: "fuego", fuente: "NASA FIRMS", titulo: "Alerta de Foco de Calor en zona periurbana de El Alto", lugar: "El Alto, La Paz", fecha: "2026-10-21 01:15:00", lat: -16.510, lng: -68.190, detalles: "Anomalía térmica VIIRS detectada." },
-      { id: "3", dept: "Santa Cruz", tipo: "prensa", fuente: "Red Uno", titulo: "Monitoreo de precipitaciones e inundaciones en Chiquitania", lugar: "Santa Cruz", fecha: "2026-10-20 22:10:00", lat: -17.783, lng: -63.182, detalles: "Reporte preventivo de emergencia." }
-    ];
-
-    function initMap() {
-      map = L.map('map').setView([-16.500, -64.500], 6);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'MapData &copy; OpenStreetMap'
-      }).addTo(map);
-
-      cargarBackend();
-    }
-
-    function renderizar(datos) {
-      markers.forEach(m => map.removeLayer(m));
-      markers = [];
-
-      datos.forEach(item => {
-        let marker = L.circleMarker([item.lat, item.lng], {
-          radius: 9,
-          fillColor: "#ef4444",
-          color: "#ffffff",
-          weight: 2,
-          fillOpacity: 0.85
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        marker.bindPopup(`
-          <div style="font-size:13px; max-width:240px;">
-            <b style="font-size:14px;">${item.titulo}</b><br>
-            <span style="color:#555;">${item.lugar}</span><br>
-            <small style="color:#777;">${item.fuente} · ${item.fecha}</small><br>
-            <p style="margin-top:6px; font-size:11px; color:#444;">${item.detalles}</p>
-          </div>
-        `);
+        function generarReportePDF() {
+            const element = document.getElementById('reporte-content');
+            const opt = {
+                margin:       0.5,
+                filename:     'SpotRep_UGRED_CCESN.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
 
-        markers.push(marker);
-      });
+        const municipiosData = [
+            { municipio: "El Alto", dept: "La Paz", riesgo: "Alto", lat: -16.5, lng: -68.19, evento: "Inundación / Alerta Sanitaria" },
+            { municipio: "San Ignacio", dept: "Santa Cruz", riesgo: "Alto", lat: -16.37, lng: -60.95, evento: "Focos de Calor VIIRS" },
+            { municipio: "Uyuni", dept: "Potosí", lat: -20.46, lng: -66.82, riesgo: "Medio", evento: "Sismo GDACS M4.1" }
+        ];
 
-      document.getElementById('stat-text').innerText = 
-        `Registros: ${registrosBase.length} totales | ${datos.length} tras filtros | ${markers.length} puntos dibujados. No equivale a incidentes confirmados.`;
-    }
+        let markersGroup = L.layerGroup().addTo(map);
 
-    function aplicarFiltros() {
-      const d = document.getElementById('filter-dept').value;
-      const t = document.getElementById('filter-tipo').value;
-      const f = document.getElementById('filter-fuente').value;
+        function renderizarMapa(datos) {
+            markersGroup.clearLayers();
+            let alto = 0, medio = 0, bajo = 0;
 
-      let filtrados = registrosBase.filter(r => {
-        let matchD = (d === 'todos' || r.dept.includes(d));
-        let matchT = (t === 'todos' || r.tipo === t);
-        let matchF = (f === 'todas' || r.fuente === f);
-        return matchD && matchT && matchF;
-      });
+            datos.forEach(m => {
+                if(m.riesgo === "Alto") alto++;
+                if(m.riesgo === "Medio") medio++;
+                if(m.riesgo === "Bajo") bajo++;
 
-      renderizar(filtrados);
-    }
+                let color = m.riesgo === "Alto" ? "#ef4444" : "#f97316";
 
-    function cargarBackend() {
-      fetch(BACKEND_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            registrosBase = data;
-          }
-          aplicarFiltros();
-        })
-        .catch(() => aplicarFiltros());
-    }
+                const circle = L.circleMarker([m.lat, m.lng], {
+                    radius: 10,
+                    fillColor: color,
+                    color: "#fff",
+                    weight: 2,
+                    fillOpacity: 0.8
+                });
 
-    window.onload = initMap;
-  </script>
+                circle.bindPopup(`
+                    <div style="color:#0f172a;">
+                        <strong>Municipio: ${m.municipio}</strong><br>
+                        <b>Depto:</b> ${m.dept}<br>
+                        <b>Evento:</b> ${m.evento}<br>
+                        <b>Nivel de Riesgo:</b> <span style="color:${color}; font-weight:bold;">${m.riesgo}</span>
+                    </div>
+                `);
+
+                markersGroup.addLayer(circle);
+            });
+
+            document.getElementById('kpi-rojo').innerText = alto;
+            document.getElementById('kpi-naranja').innerText = medio;
+            document.getElementById('kpi-amarillo').innerText = bajo;
+        }
+
+        renderizarMapa(municipiosData);
+    </script>
 </body>
 </html>
