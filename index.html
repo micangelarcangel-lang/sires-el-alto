@@ -14,10 +14,10 @@
     <style>
         #mapa-container {
             width: 100%;
-            height: 420px;
+            height: 440px;
             border-radius: 0.75rem;
-            overflow: hidden;
             background-color: #020617;
+            z-index: 1;
         }
     </style>
 </head>
@@ -31,15 +31,16 @@
                     <span class="w-3 h-3 bg-red-600 rounded-full animate-ping"></span>
                     SALA SITUACIONAL — UGRED / CCESN
                 </h1>
-                <p class="text-xs text-slate-400">Sistema de Monitoreo de Eventos en Salud y Medios de Comunicación (Municipal)</p>
+                <p class="text-xs text-slate-400">Vigilancia Epidemiológica Basada en Medios — Ley 602 y Normativa Nacional</p>
             </div>
-            <!-- BOTONERA OPERATIVA -->
+            <!-- BOTONERA OPERATIVA SEGÚN NORMATIVA -->
             <div class="flex flex-wrap items-center gap-2">
-                <button onclick="filtrarGravedad('TODOS')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition">Ver Todos</button>
-                <button onclick="filtrarGravedad('Grave')" class="bg-red-950/80 hover:bg-red-900 text-red-300 text-xs font-semibold px-3 py-2 rounded-lg border border-red-800 transition">🚨 Grave / Alto</button>
-                <button onclick="filtrarGravedad('Medio')" class="bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-800 transition">⚠️ Moderado</button>
-                <button onclick="abrirUltimoSpotRep()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
-                    📄 Abrir Último SpotRep (Drive)
+                <button onclick="filtrarAlerta('TODOS')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition">Ver Todos</button>
+                <button onclick="filtrarAlerta('ROJA')" class="bg-red-950 hover:bg-red-900 text-red-300 text-xs font-semibold px-3 py-2 rounded-lg border border-red-800 transition">🔴 Roja (Muy Alto)</button>
+                <button onclick="filtrarAlerta('NARANJA')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-800 transition">🟠 Naranja (Alto)</button>
+                <button onclick="filtrarAlerta('AMARILLA')" class="bg-yellow-950 hover:bg-yellow-900 text-yellow-300 text-xs font-semibold px-3 py-2 rounded-lg border border-yellow-800 transition">🟡 Amarilla (Medio)</button>
+                <button onclick="descargarSpotRepLocal()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
+                    📄 Descargar SpotRep Municipal
                 </button>
             </div>
         </div>
@@ -51,26 +52,30 @@
         <!-- COLUMNA IZQUIERDA: MÉTRICAS Y FILTROS -->
         <section class="lg:col-span-1 space-y-6 flex flex-col">
             
-            <!-- TARJETAS DE CONTEO -->
+            <!-- TARJETAS DE CLASIFICACIÓN DE ALERTA (Ley 602) -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Indicadores de Gravedad</h2>
-                <div class="grid grid-cols-3 gap-3 text-center">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span id="statTotal" class="text-2xl font-black text-slate-100">0</span>
-                        <p class="text-[10px] text-slate-400 mt-1 uppercase">Total</p>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Clasificación de Alertas (Ley 602)</h2>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-red-950/40 p-3 rounded-xl border border-red-900/60">
+                        <span id="statRojas" class="text-xl font-black text-red-400">0</span>
+                        <p class="text-[10px] text-red-300 mt-1 uppercase">Roja (Muy Alto)</p>
                     </div>
-                    <div class="bg-red-950/30 p-3 rounded-xl border border-red-900/50">
-                        <span id="statGraves" class="text-2xl font-black text-red-400">0</span>
-                        <p class="text-[10px] text-red-300 mt-1 uppercase">Graves</p>
+                    <div class="bg-amber-950/40 p-3 rounded-xl border border-amber-900/60">
+                        <span id="statNaranjas" class="text-xl font-black text-amber-400">0</span>
+                        <p class="text-[10px] text-amber-300 mt-1 uppercase">Naranja (Alto)</p>
                     </div>
-                    <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-900/50">
-                        <span id="statModerados" class="text-2xl font-black text-amber-400">0</span>
-                        <p class="text-[10px] text-amber-300 mt-1 uppercase">Moderados</p>
+                    <div class="bg-yellow-950/40 p-3 rounded-xl border border-yellow-900/60">
+                        <span id="statAmarillas" class="text-xl font-black text-yellow-400">0</span>
+                        <p class="text-[10px] text-yellow-300 mt-1 uppercase">Amarilla (Medio)</p>
+                    </div>
+                    <div class="bg-emerald-950/40 p-3 rounded-xl border border-emerald-900/60">
+                        <span id="statVerdes" class="text-xl font-black text-emerald-400">0</span>
+                        <p class="text-[10px] text-emerald-300 mt-1 uppercase">Verde (Bajo)</p>
                     </div>
                 </div>
             </div>
 
-            <!-- FILTRO Y GRÁFICO -->
+            <!-- FILTRO POR MUNICIPIO Y GRÁFICO -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg space-y-4 flex-grow flex flex-col justify-between">
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Filtrar por Municipio</label>
@@ -85,7 +90,7 @@
 
                 <!-- GRÁFICO ANALÍTICO -->
                 <div class="mt-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Distribución por Tipo de Evento</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Eventos por Tipo (Distribución)</h3>
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-center items-center">
                         <div class="w-full h-40">
                             <canvas id="graficoTipos"></canvas>
@@ -103,14 +108,14 @@
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Georreferenciación de Amenazas por Municipio</h2>
-                    <span id="statusMapa" class="text-[10px] text-emerald-400 font-mono">● Activo (Bolivia)</span>
+                    <span class="text-[10px] text-emerald-400 font-mono">● Sistema Activo</span>
                 </div>
                 <div id="mapa-container"></div>
             </div>
 
             <!-- TABLA / TARJETAS DETALLADAS -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg flex-grow">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Registro Operativo de Eventos Municipales</h2>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Registro Operativo Municipal y Fuentes de Medios</h2>
                 <div id="contenedorTarjetas" class="space-y-3 max-h-72 overflow-y-auto pr-1">
                     <!-- Inyección dinámica -->
                 </div>
@@ -122,21 +127,23 @@
 
     <!-- PIE DE PÁGINA -->
     <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        UGRED / CCESN — Centro de Coordinación de Emergencias en Salud Nacional | Vigilancia Epidemiológica Basada en Medios
+        UGRED / CCESN — Centro de Coordinación de Emergencias en Salud Nacional | Ministerio de Salud y Deportes
     </footer>
 
     <!-- SCRIPT DE LÓGICA Y MAPA -->
     <script>
+        // Base de datos de incidentes municipales adaptada a la Ley 602 (Verde, Amarilla, Naranja, Roja)
         const baseDatosIncidentes = [
             {
                 id: 1,
                 municipio: "El Alto",
                 provincia: "Murillo",
                 departamento: "La Paz",
-                gravedad: "Grave",
-                tipo: "Inundación / Colapso",
+                alerta: "ROJA",
+                nivelRiesgo: "Muy Alto (Emergencia)",
+                tipo: "Inundación / Colapso Sanitario",
                 afectados: 350,
-                fuente: "ABI / Urgente.bo",
+                fuenteMedio: "ABI / Urgente.bo",
                 hora: "06:30 hrs",
                 desc: "Colapso parcial de colector principal y aniego masivo en el Distrito 4.",
                 lat: -16.5000,
@@ -147,12 +154,13 @@
                 municipio: "Viacha",
                 provincia: "Ingavi",
                 departamento: "La Paz",
-                gravedad: "Medio",
-                tipo: "Alerta IRAs",
+                alerta: "AMARILLA",
+                nivelRiesgo: "Medio",
+                tipo: "Alerta Epidemiológica IRAs",
                 afectados: 120,
-                fuente: "La Razón",
+                fuenteMedio: "La Razón",
                 hora: "08:15 hrs",
-                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado en centros de salud.",
+                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado por centros de salud.",
                 lat: -16.6500,
                 lng: -68.8800
             },
@@ -161,10 +169,11 @@
                 municipio: "San Ignacio de Velasco",
                 provincia: "Velasco",
                 departamento: "Santa Cruz",
-                gravedad: "Grave",
-                tipo: "Focos de Calor",
+                alerta: "NARANJA",
+                nivelRiesgo: "Alto",
+                tipo: "Focos de Calor / Ambiental",
                 afectados: 500,
-                fuente: "El Deber",
+                fuenteMedio: "El Deber",
                 hora: "10:00 hrs",
                 desc: "Focos de calor descontrolados cercanos a comunidades periurbanas.",
                 lat: -16.3700,
@@ -175,10 +184,11 @@
                 municipio: "Cercado",
                 provincia: "Cercado",
                 departamento: "Cochabamba",
-                gravedad: "Medio",
+                alerta: "AMARILLA",
+                nivelRiesgo: "Medio",
                 tipo: "Vigilancia Preventiva",
                 afectados: 45,
-                fuente: "Los Tiempos",
+                fuenteMedio: "Los Tiempos",
                 hora: "11:45 hrs",
                 desc: "Seguimiento preventivo a eventos hidrometeorológicos en zona urbana.",
                 lat: -17.3895,
@@ -190,9 +200,12 @@
         let markersLayer = null;
         let chartInstance = null;
 
-        // Inicializar mapa al cargar la ventana
-        window.onload = function() {
-            map = L.map('mapa-container').setView([-17.0, -64.5], 6);
+        window.addEventListener('DOMContentLoaded', () => {
+            // Inicializar mapa de forma limpia
+            map = L.map('mapa-container', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([-17.0, -64.5], 6);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
                 maxZoom: 19
@@ -202,20 +215,32 @@
             
             actualizarSalaSituacional(baseDatosIncidentes);
 
-            setTimeout(function() {
+            setTimeout(() => {
                 map.invalidateSize();
-            }, 400);
-        };
+            }, 300);
+        });
+
+        function obtenerColorAlerta(alerta) {
+            switch(alerta) {
+                case 'ROJA': return '#ef4444';
+                case 'NARANJA': return '#f97316';
+                case 'AMARILLA': return '#eab308';
+                case 'VERDE': return '#10b981';
+                default: return '#3b82f6';
+            }
+        }
 
         function actualizarSalaSituacional(datos) {
-            document.getElementById("statTotal").innerText = datos.length;
-            document.getElementById("statGraves").innerText = datos.filter(i => i.gravedad === "Grave").length;
-            document.getElementById("statModerados").innerText = datos.filter(i => i.gravedad === "Medio").length;
+            // Conteo de Alertas según Ley 602
+            document.getElementById("statRojas").innerText = datos.filter(i => i.alerta === "ROJA").length;
+            document.getElementById("statNaranjas").innerText = datos.filter(i => i.alerta === "NARANJA").length;
+            document.getElementById("statAmarillas").innerText = datos.filter(i => i.alerta === "AMARILLA").length;
+            document.getElementById("statVerdes").innerText = datos.filter(i => i.alerta === "VERDE").length;
 
-            if (markersLayer) {
+            if (markersLayer && map) {
                 markersLayer.clearLayers();
                 datos.forEach(item => {
-                    let colorPin = item.gravedad === "Grave" ? "#ef4444" : "#f59e0b";
+                    let colorPin = obtenerColorAlerta(item.alerta);
                     let marker = L.circleMarker([item.lat, item.lng], {
                         radius: 11,
                         fillColor: colorPin,
@@ -228,9 +253,9 @@
                     marker.bindPopup(`
                         <div style="color: #0f172a; font-family: sans-serif; font-size: 12px;">
                             <b>Municipio: ${item.municipio}</b><br>
-                            <span style="color: red; font-weight: bold;">Riesgo: ${item.gravedad}</span><br>
-                            Tipo: ${item.tipo}<br>
-                            Hora: ${item.hora}
+                            <span style="color: ${colorPin}; font-weight: bold;">Alerta: ${item.alerta} (${item.nivelRiesgo})</span><br>
+                            Evento: ${item.tipo}<br>
+                            Fuente: ${item.fuenteMedio}
                         </div>
                     `);
                 });
@@ -244,7 +269,12 @@
             }
 
             datos.forEach(item => {
-                let badgeColor = item.gravedad === "Grave" ? "bg-red-950 text-red-400 border-red-800" : "bg-amber-950 text-amber-400 border-amber-800";
+                let badgeClass = "";
+                if(item.alerta === 'ROJA') badgeClass = "bg-red-950 text-red-400 border-red-800";
+                else if(item.alerta === 'NARANJA') badgeClass = "bg-amber-950 text-amber-400 border-amber-800";
+                else if(item.alerta === 'AMARILLA') badgeClass = "bg-yellow-950 text-yellow-400 border-yellow-800";
+                else badgeClass = "bg-emerald-950 text-emerald-400 border-emerald-800";
+
                 let card = document.createElement("div");
                 card.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 hover:border-slate-700 transition space-y-2";
                 card.innerHTML = `
@@ -253,14 +283,14 @@
                             <span class="text-[10px] uppercase font-mono text-slate-400">${item.departamento} / Prov. ${item.provincia}</span>
                             <h3 class="font-bold text-sm text-slate-100">${item.municipio}</h3>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">${item.gravedad}</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass}">Alerta ${item.alerta} (${item.nivelRiesgo})</span>
                     </div>
                     <div class="text-xs text-slate-300 space-y-1">
-                        <p><b>Amenaza:</b> ${item.tipo} (${item.afectados} afectados est.)</p>
+                        <p><b>Amenaza:</b> ${item.tipo} — <i>Est. Afectados:</i> ${item.afectados} personas</p>
                         <p class="text-slate-400 text-[11px]">${item.desc}</p>
                     </div>
                     <div class="flex justify-between items-center pt-2 border-t border-slate-900 text-[10px] text-slate-500">
-                        <span>Fuente: ${item.fuente}</span>
+                        <span><b>Fuente de Medios:</b> ${item.fuenteMedio}</span>
                         <span class="font-mono">${item.hora}</span>
                     </div>
                 `;
@@ -294,7 +324,7 @@
                     labels: labels,
                     datasets: [{
                         data: valores,
-                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'],
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6'],
                         borderWidth: 0
                     }]
                 },
@@ -311,12 +341,12 @@
             });
         }
 
-        function filtrarGravedad(nivel) {
-            if(nivel === 'TODOS') {
+        function filtrarAlerta(nivelAlerta) {
+            if(nivelAlerta === 'TODOS') {
                 cambiarFiltroMunicipio();
             } else {
                 let muniActual = document.getElementById("selectMunicipio").value;
-                let filtrados = baseDatosIncidentes.filter(i => i.gravedad === nivel && (muniActual === 'TODOS' || i.municipio === muniActual));
+                let filtrados = baseDatosIncidentes.filter(i => i.alerta === nivelAlerta && (muniActual === 'TODOS' || i.municipio === muniActual));
                 actualizarSalaSituacional(filtrados);
             }
         }
@@ -331,9 +361,27 @@
             }
         }
 
-        function abrirUltimoSpotRep() {
-            // Abre directamente la búsqueda en Google Drive filtrada para ubicar los reportes SpotRep de la UGRED de inmediato
-            window.open("https://drive.google.com/drive/search?q=SpotRep_UGRED", "_blank");
+        function descargarSpotRepLocal() {
+            let textoReporte = "UGRED — CENTRO DE COORDINACIÓN DE EMERGENCIAS EN SALUD NACIONAL\n";
+            textoReporte += "REPORTE OFICIAL DE SITUACIÓN (SpotRep) — NIVEL MUNICIPAL\n";
+            textoReporte += "Fecha y Hora: " + new Date().toLocaleString() + "\n";
+            textoReporte += "==================================================================\n\n";
+
+            baseDatosIncidentes.forEach((item, index) => {
+                textoReporte += `[INCIDENTE #${index + 1}] MUNICIPIO: ${item.municipio.toUpperCase()} (${item.departamento})\n`;
+                textoReporte += ` • Alerta Ley 602: ${item.alerta} (Riesgo ${item.nivelRiesgo})\n`;
+                textoReporte += ` • Tipo de Evento: ${item.tipo}\n`;
+                textoReporte += ` • Población Afectada Estimada: ${item.afectados} personas\n`;
+                textoReporte += ` • Fuente de Medios: ${item.fuenteMedio}\n`;
+                textoReporte += ` • Descripción: ${item.desc}\n`;
+                textoReporte += "------------------------------------------------------------------\n\n";
+            });
+
+            let blob = new Blob([textoReporte], { type: "text/plain;charset=utf-8" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "SpotRep_UGRED_Municipal_" + new Date().toISOString().slice(0,10) + ".txt";
+            link.click();
         }
     </script>
 </body>
