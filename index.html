@@ -12,14 +12,12 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Estilo estricto para asegurar visibilidad del mapa */
-        #map {
-            width: 100% !important;
-            height: 420px !important;
-            min-height: 420px !important;
+        #mapa-container {
+            width: 100%;
+            height: 420px;
             border-radius: 0.75rem;
+            overflow: hidden;
             background-color: #020617;
-            z-index: 1;
         }
     </style>
 </head>
@@ -40,8 +38,8 @@
                 <button onclick="filtrarGravedad('TODOS')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition">Ver Todos</button>
                 <button onclick="filtrarGravedad('Grave')" class="bg-red-950/80 hover:bg-red-900 text-red-300 text-xs font-semibold px-3 py-2 rounded-lg border border-red-800 transition">🚨 Grave / Alto</button>
                 <button onclick="filtrarGravedad('Medio')" class="bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-800 transition">⚠️ Moderado</button>
-                <button onclick="abrirSpotRepDrive()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
-                    📄 Ver SpotRep en Drive
+                <button onclick="abrirUltimoSpotRep()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
+                    📄 Abrir Último SpotRep (Drive)
                 </button>
             </div>
         </div>
@@ -105,9 +103,9 @@
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Georreferenciación de Amenazas por Municipio</h2>
-                    <span id="statusMapa" class="text-[10px] text-emerald-400 font-mono">● Sincronizado</span>
+                    <span id="statusMapa" class="text-[10px] text-emerald-400 font-mono">● Activo (Bolivia)</span>
                 </div>
-                <div id="map"></div>
+                <div id="mapa-container"></div>
             </div>
 
             <!-- TABLA / TARJETAS DETALLADAS -->
@@ -127,7 +125,7 @@
         UGRED / CCESN — Centro de Coordinación de Emergencias en Salud Nacional | Vigilancia Epidemiológica Basada en Medios
     </footer>
 
-    <!-- SCRIPT DE LÓGICA -->
+    <!-- SCRIPT DE LÓGICA Y MAPA -->
     <script>
         const baseDatosIncidentes = [
             {
@@ -188,46 +186,43 @@
             }
         ];
 
+        let map = null;
+        let markersLayer = null;
         let chartInstance = null;
 
-        // Inicializar Mapa con retardo para asegurar renderizado completo del DOM
-        let map;
-        let markersLayer;
-
-        window.addEventListener('DOMContentLoaded', (event) => {
-            map = L.map('map', {
-                zoomControl: true,
-                attributionControl: false
-            }).setView([-17.0, -64.5], 6);
+        // Inicializar mapa al cargar la ventana
+        window.onload = function() {
+            map = L.map('mapa-container').setView([-17.0, -64.5], 6);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
                 maxZoom: 19
             }).addTo(map);
 
             markersLayer = L.layerGroup().addTo(map);
+            
             actualizarSalaSituacional(baseDatosIncidentes);
 
-            setTimeout(() => {
+            setTimeout(function() {
                 map.invalidateSize();
-            }, 300);
-        });
+            }, 400);
+        };
 
         function actualizarSalaSituacional(datos) {
             document.getElementById("statTotal").innerText = datos.length;
             document.getElementById("statGraves").innerText = datos.filter(i => i.gravedad === "Grave").length;
             document.getElementById("statModerados").innerText = datos.filter(i => i.gravedad === "Medio").length;
 
-            if(markersLayer) {
+            if (markersLayer) {
                 markersLayer.clearLayers();
                 datos.forEach(item => {
                     let colorPin = item.gravedad === "Grave" ? "#ef4444" : "#f59e0b";
                     let marker = L.circleMarker([item.lat, item.lng], {
-                        radius: 10,
+                        radius: 11,
                         fillColor: colorPin,
                         color: "#ffffff",
                         weight: 1.5,
                         opacity: 1,
-                        fillOpacity: 0.85
+                        fillOpacity: 0.9
                     }).addTo(markersLayer);
 
                     marker.bindPopup(`
@@ -274,8 +269,8 @@
 
             actualizarGrafico(datos);
 
-            if(map) {
-                setTimeout(() => { map.invalidateSize(); }, 150);
+            if (map) {
+                setTimeout(() => { map.invalidateSize(); }, 200);
             }
         }
 
@@ -336,9 +331,9 @@
             }
         }
 
-        function abrirSpotRepDrive() {
-            // Enlace directo al visor de documentos de Google Drive donde se generan los SpotRep oficiales
-            window.open("https://drive.google.com/drive/u/0/my-drive", "_blank");
+        function abrirUltimoSpotRep() {
+            // Abre directamente la búsqueda en Google Drive filtrada para ubicar los reportes SpotRep de la UGRED de inmediato
+            window.open("https://drive.google.com/drive/search?q=SpotRep_UGRED", "_blank");
         }
     </script>
 </body>
