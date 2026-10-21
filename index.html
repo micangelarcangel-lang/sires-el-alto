@@ -130,7 +130,6 @@
             setTimeout(() => {
                 map = L.map('mapa-container', { zoomControl: true, attributionControl: false }).setView([-17.0, -64.5], 6);
                 
-                // Capa base estándar altamente confiable
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '© OpenStreetMap'
@@ -222,7 +221,6 @@
         }
 
         function cambiarFiltroMunicipio() {
-            let muni = document.getElementById("selectMunicipio.value");
             let muniVal = document.getElementById("selectMunicipio").value;
             actualizarSalaSituacional(muniVal === 'TODOS' ? baseDatosIncidentes : baseDatosIncidentes.filter(i => i.municipio === muniVal));
         }
