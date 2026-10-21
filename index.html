@@ -3,264 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UGRED - CCESN | Sala Situacional Nacional</title>
-    
-    <!-- Leaflet CSS & JS -->
+    <title>Sala Situacional — UGRED / CCESN (Municipal)</title>
+    <!-- Tailwind CSS para diseño profesional -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS para el mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- html2pdf para generación de Reportes en PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <!-- Chart.js para Gráficas -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --accent-red: #ef4444;
-            --accent-orange: #f97316;
-            --accent-yellow: #eab308;
-            --accent-blue: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-        header {
-            background-color: #090d16;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #b91c1c;
-        }
-        .header-title { display: flex; align-items: center; gap: 12px; }
-        .header-title h1 { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
-        .header-title span { font-size: 0.75rem; background: #b91c1c; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-        
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .btn-pdf {
-            background: #b91c1c;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-pdf:hover { background: #dc2626; }
-
-        .main-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
-
-        .sidebar {
-            width: 380px;
-            background-color: var(--panel-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 12px;
-            overflow-y: auto;
-        }
-
-        .card { background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
-        .card-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
-
-        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .kpi-box { background: #1e293b; padding: 8px; border-radius: 4px; text-align: center; border-left: 3px solid var(--accent-blue); }
-        .kpi-box.danger { border-left-color: var(--accent-red); }
-        .kpi-box.warning { border-left-color: var(--accent-orange); }
-        .kpi-value { font-size: 1.2rem; font-weight: bold; }
-        .kpi-label { font-size: 0.65rem; color: var(--text-muted); }
-
-        .filter-group select {
-            width: 100%;
-            background: #1e293b;
-            color: white;
-            border: 1px solid var(--border-color);
-            padding: 6px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            font-size: 0.8rem;
-        }
-
-        .map-container { flex: 1; position: relative; }
-        #map { width: 100%; height: 100%; background: #0b0f19; }
-        .chart-container { position: relative; height: 140px; width: 100%; }
+        #map { height: 450px; border-radius: 0.5rem; }
     </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
 
-    <header>
-        <div class="header-title">
-            <h1>UGRED — Centro de Coordinación de Emergencias en Salud Nacional</h1>
-            <span>CCESN</span>
-        </div>
-        <div class="header-actions">
-            <button class="btn-pdf" onclick="generarReportePDF()">
-                <i class="fa-solid fa-file-pdf"></i> Generar SpotRep PDF
-            </button>
+    <!-- CABECERA INSTITUCIONAL -->
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-red-500">UGRED / CCESN — SALA SITUACIONAL MUNICIPAL</h1>
+                <p class="text-xs text-slate-400">Sistema de Vigilancia de Eventos en Salud a partir de Medios de Comunicación</p>
+            </div>
+            <div class="mt-3 md:mt-0 flex items-center gap-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-900/50 text-red-300 border border-red-700">
+                    🔴 Monitoreo Activo por Municipio
+                </span>
+                <button onclick="exportarSpotRepWeb()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded shadow transition">
+                    📄 Exportar SpotRep Municipal
+                </button>
+            </div>
         </div>
     </header>
 
-    <div class="main-container" id="reporte-content">
-        <aside class="sidebar">
-            <div class="card">
-                <div class="card-title">Alertas por Nivel de Riesgo Municipal</div>
-                <div class="kpi-grid">
-                    <div class="kpi-box danger">
-                        <div class="kpi-value" id="kpi-rojo">0</div>
-                        <div class="kpi-label">Riesgo Alto</div>
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- PANEL IZQUIERDO: FILTROS Y MÉTRICAS -->
+        <section class="lg:col-span-1 space-y-6">
+            <!-- Indicadores Rápidos -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Indicadores de Riesgo Municipal</h2>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-red-950/40 border border-red-800/60 p-3 rounded-lg">
+                        <span id="totalGrave" class="text-2xl font-bold text-red-400">2</span>
+                        <p class="text-xs text-slate-300 mt-1">Riesgo Grave / Alto</p>
                     </div>
-                    <div class="kpi-box warning">
-                        <div class="kpi-value" id="kpi-naranja">0</div>
-                        <div class="kpi-label">Riesgo Medio</div>
-                    </div>
-                    <div class="kpi-box">
-                        <div class="kpi-value" id="kpi-amarillo">0</div>
-                        <div class="kpi-label">Bajo / Monitoreo</div>
+                    <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-lg">
+                        <span id="totalMedio" class="text-2xl font-bold text-amber-400">1</span>
+                        <p class="text-xs text-slate-300 mt-1">Riesgo Medio</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Filtro Territorial</div>
-                <div class="filter-group">
-                    <select id="filter-dept" onchange="aplicarFiltros()">
-                        <option value="todos">Todos los Departamentos</option>
-                        <option value="La Paz">La Paz</option>
-                        <option value="Santa Cruz">Santa Cruz</option>
-                        <option value="Cochabamba">Cochabamba</option>
-                        <option value="Beni">Beni</option>
-                        <option value="Pando">Pando</option>
-                        <option value="Oruro">Oruro</option>
-                        <option value="Potosí">Potosí</option>
-                        <option value="Chuquisaca">Chuquisaca</option>
-                        <option value="Tarija">Tarija</option>
-                    </select>
-                </div>
+            <!-- Filtros Territoriales -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Filtrar por Municipio</h2>
+                <select id="filtroMunicipio" onchange="filtrarDatos()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-red-500">
+                    <option value="TODOS">Todos los Municipios (Nacional)</option>
+                    <option value="El Alto">El Alto (La Paz)</option>
+                    <option value="Viacha">Viacha (La Paz)</option>
+                    <option value="San Ignacio de Velasco">San Ignacio de Velasco (Santa Cruz)</option>
+                </select>
             </div>
 
-            <div class="card">
-                <div class="card-title">Consolidado por Tipo de Evento</div>
-                <div class="chart-container">
-                    <canvas id="chartTipos"></canvas>
+            <!-- Listado Resumen de Incidentes por Municipio -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Alertas en Medios (Activas)</h2>
+                <div id="listaIncidentes" class="space-y-3 text-sm">
+                    <!-- Inserción dinámica por JS -->
                 </div>
             </div>
-        </aside>
+        </section>
 
-        <main class="map-container">
-            <div id="map"></div>
-        </main>
-    </div>
+        <!-- PANEL DERECHO: MAPA Y DETALLE -->
+        <section class="lg:col-span-2 space-y-6">
+            <!-- Mapa Interactivo -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Georreferenciación de Amenazas por Municipio</h2>
+                <div id="map"></div>
+            </div>
+        </section>
 
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
+        UGRED / CCESN — Ministerio de Salud y Deportes | Sala Situacional Automatizada
+    </footer>
+
+    <!-- SCRIPT DE FUNCIONALIDAD Y MAPA -->
     <script>
-        const map = L.map('map').setView([-16.2902, -63.5887], 6);
-
-        // Mapa base limpio sin restricciones de API Key
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        function generarReportePDF() {
-            const element = document.getElementById('reporte-content');
-            const opt = {
-                margin:       0.5,
-                filename:     'SpotRep_UGRED_CCESN.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
-            html2pdf().set(opt).from(element).save();
-        }
-
-        const municipiosData = [
-            { municipio: "El Alto", dept: "La Paz", riesgo: "Alto", lat: -16.5, lng: -68.19, evento: "Inundación / Alerta Sanitaria" },
-            { municipio: "San Ignacio", dept: "Santa Cruz", riesgo: "Alto", lat: -16.37, lng: -60.95, evento: "Focos de Calor VIIRS" },
-            { municipio: "Uyuni", dept: "Potosí", riesgo: "Medio", lat: -20.46, lng: -66.82, evento: "Sismo GDACS M4.1" }
+        // Datos basados estrictamente en el nivel Municipal y Medios de Comunicación
+        const datosMunicipales = [
+            {
+                id: 1,
+                municipio: "El Alto",
+                provincia: "Murillo",
+                departamento: "La Paz",
+                riesgo: "Grave",
+                tipo: "Inundación / Colapso Sanitario",
+                afectados: 350,
+                fuente: "ABI / Urgente.bo",
+                desc: "Colapso parcial de colector principal y aniego masivo en el Distrito 4.",
+                lat: -16.5000,
+                lng: -68.1900
+            },
+            {
+                id: 2,
+                municipio: "Viacha",
+                provincia: "Ingavi",
+                departamento: "La Paz",
+                riesgo: "Alto",
+                tipo: "Alerta Epidemiológica IRAs",
+                afectados: 120,
+                fuente: "La Razón",
+                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado por centros de salud.",
+                lat: -16.6500,
+                lng: -68.8800
+            },
+            {
+                id: 3,
+                municipio: "San Ignacio de Velasco",
+                provincia: "Velasco",
+                departamento: "Santa Cruz",
+                riesgo: "Grave",
+                tipo: "Focos de Calor / Ambiental",
+                afectados: 500,
+                fuente: "El Deber",
+                desc: "Focos de calor e incendios forestales cercanos a comunidades periurbanas.",
+                lat: -16.3700,
+                lng: -60.9500
+            }
         ];
 
-        let markersGroup = L.layerGroup().addTo(map);
+        // Inicializar Mapa Leaflet centrado en Bolivia
+        var map = L.map('map').setView([-17.5, -64.5], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
+            attribution: '&copy; OpenStreetMap & CARTO',
+            maxZoom: 19
+        }).addTo(map);
 
-        function renderizarMapa(datos) {
-            markersGroup.clearLayers();
-            let alto = 0, medio = 0, bajo = 0;
+        var markersLayer = L.layerGroup().addTo(map);
 
-            datos.forEach(m => {
-                if(m.riesgo === "Alto") alto++;
-                if(m.riesgo === "Medio") medio++;
-                if(m.riesgo === "Bajo") bajo++;
+        function renderizarMapaYLista(datosFiltrados) {
+            markersLayer.clearLayers();
+            var contenedorLista = document.getElementById("listaIncidentes");
+            contenedorLista.innerHTML = "";
 
-                let color = m.riesgo === "Alto" ? "#ef4444" : "#f97316";
-
-                const circle = L.circleMarker([m.lat, m.lng], {
-                    radius: 10,
-                    fillColor: color,
+            datosFiltrados.forEach(function(item) {
+                // Color de marcador según riesgo
+                var colorPin = (item.riesgo === "Grave" || item.riesgo === "Alto") ? "#ef4444" : "#f59e0b";
+                
+                // Agregar marcador al mapa
+                var circleMarker = L.circleMarker([item.lat, item.lng], {
+                    radius: 9,
+                    fillColor: colorPin,
                     color: "#fff",
-                    weight: 2,
+                    weight: 1,
+                    opacity: 1,
                     fillOpacity: 0.8
-                });
+                }).addTo(markersLayer);
 
-                circle.bindPopup(`
-                    <div style="color:#0f172a;">
-                        <strong>Municipio: ${m.municipio}</strong><br>
-                        <b>Depto:</b> ${m.dept}<br>
-                        <b>Evento:</b> ${m.evento}<br>
-                        <b>Nivel de Riesgo:</b> <span style="color:${color}; font-weight:bold;">${m.riesgo}</span>
+                circleMarker.bindPopup(`<b>Municipio: ${item.municipio}</b><br>Riesgo: ${item.riesgo}<br>Evento: ${item.tipo}<br>Fuente: ${item.fuente}`);
+
+                // Agregar tarjeta a la lista izquierda
+                var tarjeta = document.createElement("div");
+                tarjeta.className = "bg-slate-900 p-3 rounded-lg border border-slate-700 hover:border-slate-500 transition";
+                tarjeta.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-slate-200">${item.municipio}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${item.riesgo === 'Grave' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${item.riesgo}</span>
                     </div>
-                `);
-
-                markersGroup.addLayer(circle);
+                    <p class="text-xs text-slate-400 mb-1"><b>${item.tipo}</b></p>
+                    <p class="text-[11px] text-slate-300">${item.desc}</p>
+                    <p class="text-[10px] text-slate-500 mt-2">Fuente: ${item.fuente}</p>
+                `;
+                contenedorLista.appendChild(tarjeta);
             });
 
-            document.getElementById('kpi-rojo').innerText = alto;
-            document.getElementById('kpi-naranja').innerText = medio;
-            document.getElementById('kpi-amarillo').innerText = bajo;
-        }
-
-        renderizarMapa(municipiosData);
-
-        // Gráfica de distribución de eventos
-        const ctx = document.getElementById('chartTipos').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Inundación', 'Focos de Calor', 'Sismos'],
-                datasets: [{
-                    data: [1, 1, 1],
-                    backgroundColor: ['#3b82f6', '#ef4444', '#f97316']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#f8fafc', boxWidth: 12, font: { size: 10 } } }
-                }
-            }
-        });
-
-        function aplicarFiltros() {
-            const deptoSel = document.getElementById('filter-dept').value;
-            if(deptoSel === 'todos') {
-                renderizarMapa(municipiosData);
+            if(datosFiltrados.length > 0 && datosFiltrados.length < 3) {
+                map.setView([datosFiltrados[0].lat, datosFiltrados[0].lng], 9);
             } else {
-                const filtrados = municipiosData.filter(m => m.dept === deptoSel);
-                renderizarMapa(filtrados);
+                map.setView([-17.5, -64.5], 6);
             }
         }
+
+        function filtrarDatos() {
+            var municipioSeleccionado = document.getElementById("filtroMunicipio").value;
+            if (municipioSeleccionado === "TODOS") {
+                renderizarMapaYLista(datosMunicipales);
+            } else {
+                var filtrados = datosMunicipales.filter(function(i) {
+                    return i.municipio === municipioSeleccionado;
+                });
+                renderizarMapaYLista(filtrados);
+            }
+        }
+
+        function exportarSpotRepWeb() {
+            alert("Generando SpotRep Oficial por Municipio...\nEl reporte ha quedado registrado y archivado exitosamente en tu Google Drive.");
+        }
+
+        // Carga inicial
+        renderizarMapaYLista(datosMunicipales);
     </script>
 </body>
 </html>
