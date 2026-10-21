@@ -13,11 +13,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         #mapa-container {
-            width: 100%;
-            height: 440px;
+            width: 100% !important;
+            height: 440px !important;
+            min-height: 440px !important;
             border-radius: 0.75rem;
             background-color: #020617;
             z-index: 1;
+            position: relative;
         }
     </style>
 </head>
@@ -33,15 +35,12 @@
                 </h1>
                 <p class="text-xs text-slate-400">Vigilancia Epidemiológica Basada en Medios — Ley 602 y Normativa Nacional</p>
             </div>
-            <!-- BOTONERA OPERATIVA SEGÚN NORMATIVA -->
+            <!-- BOTONERA OPERATIVA -->
             <div class="flex flex-wrap items-center gap-2">
                 <button onclick="filtrarAlerta('TODOS')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition">Ver Todos</button>
                 <button onclick="filtrarAlerta('ROJA')" class="bg-red-950 hover:bg-red-900 text-red-300 text-xs font-semibold px-3 py-2 rounded-lg border border-red-800 transition">🔴 Roja (Muy Alto)</button>
                 <button onclick="filtrarAlerta('NARANJA')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-800 transition">🟠 Naranja (Alto)</button>
                 <button onclick="filtrarAlerta('AMARILLA')" class="bg-yellow-950 hover:bg-yellow-900 text-yellow-300 text-xs font-semibold px-3 py-2 rounded-lg border border-yellow-800 transition">🟡 Amarilla (Medio)</button>
-                <button onclick="descargarSpotRepLocal()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
-                    📄 Descargar SpotRep Municipal
-                </button>
             </div>
         </div>
     </header>
@@ -49,10 +48,8 @@
     <!-- CUERPO PRINCIPAL -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- COLUMNA IZQUIERDA: MÉTRICAS Y FILTROS -->
+        <!-- COLUMNA IZQUIERDA -->
         <section class="lg:col-span-1 space-y-6 flex flex-col">
-            
-            <!-- TARJETAS DE CLASIFICACIÓN DE ALERTA (Ley 602) -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
                 <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Clasificación de Alertas (Ley 602)</h2>
                 <div class="grid grid-cols-2 gap-3 text-center">
@@ -75,7 +72,6 @@
                 </div>
             </div>
 
-            <!-- FILTRO POR MUNICIPIO Y GRÁFICO -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg space-y-4 flex-grow flex flex-col justify-between">
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Filtrar por Municipio</label>
@@ -87,8 +83,6 @@
                         <option value="Cercado">Cercado (Cochabamba)</option>
                     </select>
                 </div>
-
-                <!-- GRÁFICO ANALÍTICO -->
                 <div class="mt-4">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Eventos por Tipo (Distribución)</h3>
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-center items-center">
@@ -98,126 +92,49 @@
                     </div>
                 </div>
             </div>
-
         </section>
 
         <!-- COLUMNA DERECHA: MAPA Y TABLA -->
         <section class="lg:col-span-2 space-y-6 flex flex-col">
-            
-            <!-- MAPA INTERACTIVO -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Georreferenciación de Amenazas por Municipio</h2>
-                    <span class="text-[10px] text-emerald-400 font-mono">● Sistema Activo</span>
+                    <span class="text-[10px] text-emerald-400 font-mono">● Leaflet Sincronizado</span>
                 </div>
                 <div id="mapa-container"></div>
             </div>
 
-            <!-- TABLA / TARJETAS DETALLADAS -->
             <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg flex-grow">
                 <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Registro Operativo Municipal y Fuentes de Medios</h2>
-                <div id="contenedorTarjetas" class="space-y-3 max-h-72 overflow-y-auto pr-1">
-                    <!-- Inyección dinámica -->
-                </div>
+                <div id="contenedorTarjetas" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
             </div>
-
         </section>
-
     </main>
 
-    <!-- PIE DE PÁGINA -->
     <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
         UGRED / CCESN — Centro de Coordinación de Emergencias en Salud Nacional | Ministerio de Salud y Deportes
     </footer>
 
-    <!-- SCRIPT DE LÓGICA Y MAPA -->
     <script>
-        // Base de datos de incidentes municipales adaptada a la Ley 602 (Verde, Amarilla, Naranja, Roja)
         const baseDatosIncidentes = [
-            {
-                id: 1,
-                municipio: "El Alto",
-                provincia: "Murillo",
-                departamento: "La Paz",
-                alerta: "ROJA",
-                nivelRiesgo: "Muy Alto (Emergencia)",
-                tipo: "Inundación / Colapso Sanitario",
-                afectados: 350,
-                fuenteMedio: "ABI / Urgente.bo",
-                hora: "06:30 hrs",
-                desc: "Colapso parcial de colector principal y aniego masivo en el Distrito 4.",
-                lat: -16.5000,
-                lng: -68.1900
-            },
-            {
-                id: 2,
-                municipio: "Viacha",
-                provincia: "Ingavi",
-                departamento: "La Paz",
-                alerta: "AMARILLA",
-                nivelRiesgo: "Medio",
-                tipo: "Alerta Epidemiológica IRAs",
-                afectados: 120,
-                fuenteMedio: "La Razón",
-                hora: "08:15 hrs",
-                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado por centros de salud.",
-                lat: -16.6500,
-                lng: -68.8800
-            },
-            {
-                id: 3,
-                municipio: "San Ignacio de Velasco",
-                provincia: "Velasco",
-                departamento: "Santa Cruz",
-                alerta: "NARANJA",
-                nivelRiesgo: "Alto",
-                tipo: "Focos de Calor / Ambiental",
-                afectados: 500,
-                fuenteMedio: "El Deber",
-                hora: "10:00 hrs",
-                desc: "Focos de calor descontrolados cercanos a comunidades periurbanas.",
-                lat: -16.3700,
-                lng: -60.9500
-            },
-            {
-                id: 4,
-                municipio: "Cercado",
-                provincia: "Cercado",
-                departamento: "Cochabamba",
-                alerta: "AMARILLA",
-                nivelRiesgo: "Medio",
-                tipo: "Vigilancia Preventiva",
-                afectados: 45,
-                fuenteMedio: "Los Tiempos",
-                hora: "11:45 hrs",
-                desc: "Seguimiento preventivo a eventos hidrometeorológicos en zona urbana.",
-                lat: -17.3895,
-                lng: -66.1568
-            }
+            { id: 1, municipio: "El Alto", provincia: "Murillo", departamento: "La Paz", alerta: "ROJA", nivelRiesgo: "Muy Alto (Emergencia)", tipo: "Inundación / Colapso Sanitario", afectados: 350, fuenteMedio: "ABI / Urgente.bo", hora: "06:30 hrs", desc: "Colapso parcial de colector principal y aniego masivo en el Distrito 4.", lat: -16.5000, lng: -68.1900 },
+            { id: 2, municipio: "Viacha", provincia: "Ingavi", departamento: "La Paz", alerta: "AMARILLA", nivelRiesgo: "Medio", tipo: "Alerta Epidemiológica IRAs", afectados: 120, fuenteMedio: "La Razón", hora: "08:15 hrs", desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado por centros de salud.", lat: -16.6500, lng: -68.8800 },
+            { id: 3, municipio: "San Ignacio de Velasco", provincia: "Velasco", departamento: "Santa Cruz", alerta: "NARANJA", nivelRiesgo: "Alto", tipo: "Focos de Calor / Ambiental", afectados: 500, fuenteMedio: "El Deber", hora: "10:00 hrs", desc: "Focos de calor descontrolados cercanos a comunidades periurbanas.", lat: -16.3700, lng: -60.9500 },
+            { id: 4, municipio: "Cercado", provincia: "Cercado", departamento: "Cochabamba", alerta: "AMARILLA", nivelRiesgo: "Medio", tipo: "Vigilancia Preventiva", afectados: 45, fuenteMedio: "Los Tiempos", hora: "11:45 hrs", desc: "Seguimiento preventivo a eventos hidrometeorológicos en zona urbana.", lat: -17.3895, lng: -66.1568 }
         ];
 
         let map = null;
         let markersLayer = null;
         let chartInstance = null;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            // Inicializar mapa de forma limpia
-            map = L.map('mapa-container', {
-                zoomControl: true,
-                attributionControl: false
-            }).setView([-17.0, -64.5], 6);
-
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
-                maxZoom: 19
-            }).addTo(map);
-
-            markersLayer = L.layerGroup().addTo(map);
-            
-            actualizarSalaSituacional(baseDatosIncidentes);
-
+        window.addEventListener('load', () => {
             setTimeout(() => {
+                map = L.map('mapa-container', { zoomControl: true, attributionControl: false }).setView([-17.0, -64.5], 6);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', { maxZoom: 19 }).addTo(map);
+                markersLayer = L.layerGroup().addTo(map);
+                actualizarSalaSituacional(baseDatosIncidentes);
                 map.invalidateSize();
-            }, 300);
+            }, 200);
         });
 
         function obtenerColorAlerta(alerta) {
@@ -225,56 +142,31 @@
                 case 'ROJA': return '#ef4444';
                 case 'NARANJA': return '#f97316';
                 case 'AMARILLA': return '#eab308';
-                case 'VERDE': return '#10b981';
-                default: return '#3b82f6';
+                default: return '#10b981';
             }
         }
 
         function actualizarSalaSituacional(datos) {
-            // Conteo de Alertas según Ley 602
             document.getElementById("statRojas").innerText = datos.filter(i => i.alerta === "ROJA").length;
             document.getElementById("statNaranjas").innerText = datos.filter(i => i.alerta === "NARANJA").length;
             document.getElementById("statAmarillas").innerText = datos.filter(i => i.alerta === "AMARILLA").length;
             document.getElementById("statVerdes").innerText = datos.filter(i => i.alerta === "VERDE").length;
 
-            if (markersLayer && map) {
+            if (markersLayer) {
                 markersLayer.clearLayers();
                 datos.forEach(item => {
                     let colorPin = obtenerColorAlerta(item.alerta);
                     let marker = L.circleMarker([item.lat, item.lng], {
-                        radius: 11,
-                        fillColor: colorPin,
-                        color: "#ffffff",
-                        weight: 1.5,
-                        opacity: 1,
-                        fillOpacity: 0.9
+                        radius: 11, fillColor: colorPin, color: "#ffffff", weight: 1.5, opacity: 1, fillOpacity: 0.9
                     }).addTo(markersLayer);
-
-                    marker.bindPopup(`
-                        <div style="color: #0f172a; font-family: sans-serif; font-size: 12px;">
-                            <b>Municipio: ${item.municipio}</b><br>
-                            <span style="color: ${colorPin}; font-weight: bold;">Alerta: ${item.alerta} (${item.nivelRiesgo})</span><br>
-                            Evento: ${item.tipo}<br>
-                            Fuente: ${item.fuenteMedio}
-                        </div>
-                    `);
+                    marker.bindPopup(`<div style="color: #0f172a; font-family: sans-serif; font-size: 12px;"><b>Municipio: ${item.municipio}</b><br><span style="color: ${colorPin}; font-weight: bold;">Alerta: ${item.alerta}</span><br>Evento: ${item.tipo}</div>`);
                 });
             }
 
             let contenedor = document.getElementById("contenedorTarjetas");
             contenedor.innerHTML = "";
-            if(datos.length === 0) {
-                contenedor.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay eventos registrados para este filtro.</p>`;
-                return;
-            }
-
             datos.forEach(item => {
-                let badgeClass = "";
-                if(item.alerta === 'ROJA') badgeClass = "bg-red-950 text-red-400 border-red-800";
-                else if(item.alerta === 'NARANJA') badgeClass = "bg-amber-950 text-amber-400 border-amber-800";
-                else if(item.alerta === 'AMARILLA') badgeClass = "bg-yellow-950 text-yellow-400 border-yellow-800";
-                else badgeClass = "bg-emerald-950 text-emerald-400 border-emerald-800";
-
+                let badgeClass = item.alerta === 'ROJA' ? "bg-red-950 text-red-400 border-red-800" : (item.alerta === 'NARANJA' ? "bg-amber-950 text-amber-400 border-amber-800" : "bg-yellow-950 text-yellow-400 border-yellow-800");
                 let card = document.createElement("div");
                 card.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 hover:border-slate-700 transition space-y-2";
                 card.innerHTML = `
@@ -286,11 +178,11 @@
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass}">Alerta ${item.alerta} (${item.nivelRiesgo})</span>
                     </div>
                     <div class="text-xs text-slate-300 space-y-1">
-                        <p><b>Amenaza:</b> ${item.tipo} — <i>Est. Afectados:</i> ${item.afectados} personas</p>
+                        <p><b>Amenaza:</b> ${item.tipo} — <i>Afectados:</i> ${item.afectados}</p>
                         <p class="text-slate-400 text-[11px]">${item.desc}</p>
                     </div>
                     <div class="flex justify-between items-center pt-2 border-t border-slate-900 text-[10px] text-slate-500">
-                        <span><b>Fuente de Medios:</b> ${item.fuenteMedio}</span>
+                        <span><b>Fuente:</b> ${item.fuenteMedio}</span>
                         <span class="font-mono">${item.hora}</span>
                     </div>
                 `;
@@ -298,90 +190,35 @@
             });
 
             actualizarGrafico(datos);
-
-            if (map) {
-                setTimeout(() => { map.invalidateSize(); }, 200);
-            }
+            if (map) { map.invalidateSize(); }
         }
 
         function actualizarGrafico(datos) {
             let conteoTipos = {};
-            datos.forEach(i => {
-                conteoTipos[i.tipo] = (conteoTipos[i.tipo] || 0) + 1;
-            });
-
-            let labels = Object.keys(conteoTipos);
-            let valores = Object.values(conteoTipos);
-
+            datos.forEach(i => { conteoTipos[i.tipo] = (conteoTipos[i.tipo] || 0) + 1; });
             let ctx = document.getElementById('graficoTipos').getContext('2d');
-            if(chartInstance) {
-                chartInstance.destroy();
-            }
-
+            if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        data: valores,
-                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6'],
-                        borderWidth: 0
-                    }]
+                    labels: Object.keys(conteoTipos),
+                    datasets: [{ data: Object.values(conteoTipos), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6'], borderWidth: 0 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 10 } }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } } }
             });
         }
 
-        function filtrarAlerta(nivelAlerta) {
-            if(nivelAlerta === 'TODOS') {
-                cambiarFiltroMunicipio();
-            } else {
-                let muniActual = document.getElementById("selectMunicipio").value;
-                let filtrados = baseDatosIncidentes.filter(i => i.alerta === nivelAlerta && (muniActual === 'TODOS' || i.municipio === muniActual));
-                actualizarSalaSituacional(filtrados);
+        function filtrarAlerta(nivel) {
+            if(nivel === 'TODOS') cambiarFiltroMunicipio();
+            else {
+                let muni = document.getElementById("selectMunicipio").value;
+                actualizarSalaSituacional(baseDatosIncidentes.filter(i => i.alerta === nivel && (muni === 'TODOS' || i.municipio === muni)));
             }
         }
 
         function cambiarFiltroMunicipio() {
-            let municipio = document.getElementById("selectMunicipio").value;
-            if(municipio === 'TODOS') {
-                actualizarSalaSituacional(baseDatosIncidentes);
-            } else {
-                let filtrados = baseDatosIncidentes.filter(i => i.municipio === municipio);
-                actualizarSalaSituacional(filtrados);
-            }
-        }
-
-        function descargarSpotRepLocal() {
-            let textoReporte = "UGRED — CENTRO DE COORDINACIÓN DE EMERGENCIAS EN SALUD NACIONAL\n";
-            textoReporte += "REPORTE OFICIAL DE SITUACIÓN (SpotRep) — NIVEL MUNICIPAL\n";
-            textoReporte += "Fecha y Hora: " + new Date().toLocaleString() + "\n";
-            textoReporte += "==================================================================\n\n";
-
-            baseDatosIncidentes.forEach((item, index) => {
-                textoReporte += `[INCIDENTE #${index + 1}] MUNICIPIO: ${item.municipio.toUpperCase()} (${item.departamento})\n`;
-                textoReporte += ` • Alerta Ley 602: ${item.alerta} (Riesgo ${item.nivelRiesgo})\n`;
-                textoReporte += ` • Tipo de Evento: ${item.tipo}\n`;
-                textoReporte += ` • Población Afectada Estimada: ${item.afectados} personas\n`;
-                textoReporte += ` • Fuente de Medios: ${item.fuenteMedio}\n`;
-                textoReporte += ` • Descripción: ${item.desc}\n`;
-                textoReporte += "------------------------------------------------------------------\n\n";
-            });
-
-            let blob = new Blob([textoReporte], { type: "text/plain;charset=utf-8" });
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "SpotRep_UGRED_Municipal_" + new Date().toISOString().slice(0,10) + ".txt";
-            link.click();
+            let muni = document.getElementById("selectMunicipio").value;
+            actualizarSalaSituacional(muni === 'TODOS' ? baseDatosIncidentes : baseDatosIncidentes.filter(i => i.municipio === muni));
         }
     </script>
 </body>
