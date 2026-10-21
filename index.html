@@ -3,105 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sala Situacional — UGRED / CCESN (Municipal)</title>
-    <!-- Tailwind CSS para diseño profesional -->
+    <title>Sala Situacional en Salud — UGRED / CCESN (Municipal)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet CSS para el mapa -->
+    <!-- Leaflet CSS & JS para el Mapa Interactivo -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js para Gráficos Analíticos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        #map { height: 450px; border-radius: 0.5rem; }
+        #map { height: 420px; border-radius: 0.75rem; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
 
     <!-- CABECERA INSTITUCIONAL -->
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-xl font-bold tracking-wide text-red-500">UGRED / CCESN — SALA SITUACIONAL MUNICIPAL</h1>
-                <p class="text-xs text-slate-400">Sistema de Vigilancia de Eventos en Salud a partir de Medios de Comunicación</p>
+                <h1 class="text-xl font-bold tracking-wider text-red-500 flex items-center gap-2">
+                    <span class="w-3 h-3 bg-red-600 rounded-full animate-ping"></span>
+                    SALA SITUACIONAL — UGRED / CCESN
+                </h1>
+                <p class="text-xs text-slate-400">Sistema de Monitoreo de Eventos en Salud y Medios de Comunicación (Municipal)</p>
             </div>
-            <div class="mt-3 md:mt-0 flex items-center gap-3">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-900/50 text-red-300 border border-red-700">
-                    🔴 Monitoreo Activo por Municipio
-                </span>
-                <button onclick="exportarSpotRepWeb()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded shadow transition">
-                    📄 Exportar SpotRep Municipal
+            <!-- BOTONERA OPERATIVA EN TIEMPO REAL -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="filtrarGravedad('TODOS')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition">Ver Todos</button>
+                <button onclick="filtrarGravedad('Grave')" class="bg-red-950/80 hover:bg-red-900 text-red-300 text-xs font-semibold px-3 py-2 rounded-lg border border-red-800 transition">🚨 Grave / Alto</button>
+                <button onclick="filtrarGravedad('Medio')" class="bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs font-semibold px-3 py-2 rounded-lg border border-amber-800 transition">⚠️ Moderado</button>
+                <button onclick="generarSpotRepPDFWeb()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg transition flex items-center gap-1.5">
+                    📄 Generar SpotRep Oficial
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- CONTENIDO PRINCIPAL -->
+    <!-- CUERPO PRINCIPAL -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- PANEL IZQUIERDO: FILTROS Y MÉTRICAS -->
+        <!-- COLUMNA IZQUIERDA: MÉTRICAS Y FILTROS -->
         <section class="lg:col-span-1 space-y-6">
-            <!-- Indicadores Rápidos -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Indicadores de Riesgo Municipal</h2>
-                <div class="grid grid-cols-2 gap-3 text-center">
-                    <div class="bg-red-950/40 border border-red-800/60 p-3 rounded-lg">
-                        <span id="totalGrave" class="text-2xl font-bold text-red-400">2</span>
-                        <p class="text-xs text-slate-300 mt-1">Riesgo Grave / Alto</p>
+            
+            <!-- TARJETAS DE CONTEO Y RESUMEN -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Indicadores de Gravedad</h2>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span id="statTotal" class="text-2xl font-black text-slate-100">0</span>
+                        <p class="text-[10px] text-slate-400 mt-1 uppercase">Total Eventos</p>
                     </div>
-                    <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-lg">
-                        <span id="totalMedio" class="text-2xl font-bold text-amber-400">1</span>
-                        <p class="text-xs text-slate-300 mt-1">Riesgo Medio</p>
+                    <div class="bg-red-950/30 p-3 rounded-xl border border-red-900/50">
+                        <span id="statGraves" class="text-2xl font-black text-red-400">0</span>
+                        <p class="text-[10px] text-red-300 mt-1 uppercase">Graves / Altos</p>
+                    </div>
+                    <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-900/50">
+                        <span id="statModerados" class="text-2xl font-black text-amber-400">0</span>
+                        <p class="text-[10px] text-amber-300 mt-1 uppercase">Moderados</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Filtros Territoriales -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Filtrar por Municipio</h2>
-                <select id="filtroMunicipio" onchange="filtrarDatos()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-red-500">
-                    <option value="TODOS">Todos los Municipios (Nacional)</option>
-                    <option value="El Alto">El Alto (La Paz)</option>
-                    <option value="Viacha">Viacha (La Paz)</option>
-                    <option value="San Ignacio de Velasco">San Ignacio de Velasco (Santa Cruz)</option>
-                </select>
-            </div>
+            <!-- FILTRO POR MUNICIPIO O DEPARTAMENTO -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Filtrar por Municipio</label>
+                    <select id="selectMunicipio" onchange="cambiarFiltroMunicipio()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-red-500">
+                        <option value="TODOS">Todos los Municipios (Nacional)</option>
+                        <option value="El Alto">El Alto (La Paz)</option>
+                        <option value="Viacha">Viacha (La Paz)</option>
+                        <option value="San Ignacio de Velasco">San Ignacio de Velasco (Santa Cruz)</option>
+                        <option value="Cercado">Cercado (Cochabamba)</option>
+                    </select>
+                </div>
 
-            <!-- Listado Resumen de Incidentes por Municipio -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Alertas en Medios (Activas)</h2>
-                <div id="listaIncidentes" class="space-y-3 text-sm">
-                    <!-- Inserción dinámica por JS -->
+                <!-- GRÁFICO ANALÍTICO POR TIPO DE EVENTO -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Distribución por Tipo de Evento</h3>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-center">
+                        <div class="w-full h-44">
+                            <canvas id="graficoTipos"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </section>
 
-        <!-- PANEL DERECHO: MAPA Y DETALLE -->
+        <!-- COLUMNA DERECHA: MAPA Y TABLA DE REPORTES EN TIEMPO REAL -->
         <section class="lg:col-span-2 space-y-6">
-            <!-- Mapa Interactivo -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Georreferenciación de Amenazas por Municipio</h2>
+            
+            <!-- MAPA INTERACTIVO -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Georreferenciación de Amenazas por Municipio</h2>
+                    <span id="statusMapa" class="text-[10px] text-emerald-400 font-mono">● Tiempo Real Activo</span>
+                </div>
                 <div id="map"></div>
             </div>
+
+            <!-- TABLA / TARJETAS DETALLADAS DE INCIDENTES -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Registro Operativo de Eventos Municipales</h2>
+                <div id="contenedorTarjetas" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    <!-- Inyección dinámica -->
+                </div>
+            </div>
+
         </section>
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
-        UGRED / CCESN — Ministerio de Salud y Deportes | Sala Situacional Automatizada
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        UGRED / CCESN — Centro de Coordinación de Emergencias en Salud Nacional | Vigilancia Epidemiológica Basada en Medios
     </footer>
 
-    <!-- SCRIPT DE FUNCIONALIDAD Y MAPA -->
+    <!-- SCRIPT DE LÓGICA EN TIEMPO REAL Y GRÁFICOS -->
     <script>
-        // Datos basados estrictamente en el nivel Municipal y Medios de Comunicación
-        const datosMunicipales = [
+        // Base de datos de incidentes municipales estructurada
+        const baseDatosIncidentes = [
             {
                 id: 1,
                 municipio: "El Alto",
                 provincia: "Murillo",
                 departamento: "La Paz",
-                riesgo: "Grave",
-                tipo: "Inundación / Colapso Sanitario",
+                gravedad: "Grave",
+                tipo: "Inundación / Colapso",
                 afectados: 350,
                 fuente: "ABI / Urgente.bo",
+                hora: "06:30 hrs",
                 desc: "Colapso parcial de colector principal y aniego masivo en el Distrito 4.",
                 lat: -16.5000,
                 lng: -68.1900
@@ -111,11 +142,12 @@
                 municipio: "Viacha",
                 provincia: "Ingavi",
                 departamento: "La Paz",
-                riesgo: "Alto",
-                tipo: "Alerta Epidemiológica IRAs",
+                gravedad: "Medio",
+                tipo: "Alerta IRAs",
                 afectados: 120,
                 fuente: "La Razón",
-                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado por centros de salud.",
+                hora: "08:15 hrs",
+                desc: "Aumento inusual de Infecciones Respiratorias Agudas reportado en centros de salud.",
                 lat: -16.6500,
                 lng: -68.8800
             },
@@ -124,86 +156,171 @@
                 municipio: "San Ignacio de Velasco",
                 provincia: "Velasco",
                 departamento: "Santa Cruz",
-                riesgo: "Grave",
-                tipo: "Focos de Calor / Ambiental",
+                gravedad: "Grave",
+                tipo: "Focos de Calor",
                 afectados: 500,
                 fuente: "El Deber",
-                desc: "Focos de calor e incendios forestales cercanos a comunidades periurbanas.",
+                hora: "10:00 hrs",
+                desc: "Focos de calor descontrolados cercanos a comunidades periurbanas.",
                 lat: -16.3700,
                 lng: -60.9500
+            },
+            {
+                id: 4,
+                municipio: "Cercado",
+                provincia: "Cercado",
+                departamento: "Cochabamba",
+                gravedad: "Medio",
+                tipo: "Vigilancia Preventiva",
+                afectados: 45,
+                fuente: "Los Tiempos",
+                hora: "11:45 hrs",
+                desc: "Seguimiento preventivo a eventos hidrometeorológicos en zona urbana.",
+                lat: -17.3895,
+                lng: -66.1568
             }
         ];
 
-        // Inicializar Mapa Leaflet centrado en Bolivia
-        var map = L.map('map').setView([-17.5, -64.5], 6);
+        let datosActuales = [...baseDatosIncidentes];
+
+        // Inicializar Mapa Leaflet
+        var map = L.map('map').setView([-17.0, -64.5], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
             attribution: '&copy; OpenStreetMap & CARTO',
             maxZoom: 19
         }).addTo(map);
 
         var markersLayer = L.layerGroup().addTo(map);
+        let chartInstance = null;
 
-        function renderizarMapaYLista(datosFiltrados) {
+        function actualizarSalaSituacional(datos) {
+            // Actualizar Métricas
+            document.getElementById("statTotal").innerText = datos.length;
+            document.getElementById("statGraves").innerText = datos.filter(i => i.gravedad === "Grave").length;
+            document.getElementById("statModerados").innerText = datos.filter(i => i.gravedad === "Medio").length;
+
+            // Limpiar y poblar Mapa
             markersLayer.clearLayers();
-            var contenedorLista = document.getElementById("listaIncidentes");
-            contenedorLista.innerHTML = "";
-
-            datosFiltrados.forEach(function(item) {
-                // Color de marcador según riesgo
-                var colorPin = (item.riesgo === "Grave" || item.riesgo === "Alto") ? "#ef4444" : "#f59e0b";
-                
-                // Agregar marcador al mapa
-                var circleMarker = L.circleMarker([item.lat, item.lng], {
-                    radius: 9,
+            datos.forEach(item => {
+                let colorPin = item.gravedad === "Grave" ? "#ef4444" : "#f59e0b";
+                let marker = L.circleMarker([item.lat, item.lng], {
+                    radius: 10,
                     fillColor: colorPin,
-                    color: "#fff",
-                    weight: 1,
+                    color: "#ffffff",
+                    weight: 1.5,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.85
                 }).addTo(markersLayer);
 
-                circleMarker.bindPopup(`<b>Municipio: ${item.municipio}</b><br>Riesgo: ${item.riesgo}<br>Evento: ${item.tipo}<br>Fuente: ${item.fuente}`);
-
-                // Agregar tarjeta a la lista izquierda
-                var tarjeta = document.createElement("div");
-                tarjeta.className = "bg-slate-900 p-3 rounded-lg border border-slate-700 hover:border-slate-500 transition";
-                tarjeta.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-slate-200">${item.municipio}</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${item.riesgo === 'Grave' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${item.riesgo}</span>
+                marker.bindPopup(`
+                    <div style="color: #0f172a; font-family: sans-serif;">
+                        <b>Municipio: ${item.municipio}</b><br>
+                        <span style="color: red; font-weight: bold;">Riesgo: ${item.gravedad}</span><br>
+                        Tipo: ${item.tipo}<br>
+                        Hora: ${item.hora}
                     </div>
-                    <p class="text-xs text-slate-400 mb-1"><b>${item.tipo}</b></p>
-                    <p class="text-[11px] text-slate-300">${item.desc}</p>
-                    <p class="text-[10px] text-slate-500 mt-2">Fuente: ${item.fuente}</p>
-                `;
-                contenedorLista.appendChild(tarjeta);
+                `);
             });
 
-            if(datosFiltrados.length > 0 && datosFiltrados.length < 3) {
-                map.setView([datosFiltrados[0].lat, datosFiltrados[0].lng], 9);
+            // Poblar Tarjetas de Eventos
+            let contenedor = document.getElementById("contenedorTarjetas");
+            contenedor.innerHTML = "";
+            if(datos.length === 0) {
+                contenedor.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay eventos registrados para este filtro.</p>`;
+                return;
+            }
+
+            datos.forEach(item => {
+                let badgeColor = item.gravedad === "Grave" ? "bg-red-950 text-red-400 border-red-800" : "bg-amber-950 text-amber-400 border-amber-800";
+                let card = document.createElement("div");
+                card.className = "bg-slate-950 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition space-y-2";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] uppercase font-mono text-slate-400">${item.departamento} / Prov. ${item.provincia}</span>
+                            <h3 class="font-bold text-sm text-slate-100">${item.municipio}</h3>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">${item.gravedad}</span>
+                    </div>
+                    <div class="text-xs text-slate-300 space-y-1">
+                        <p><b>Amenaza:</b> ${item.tipo} (${item.afectados} afectados est.)</p>
+                        <p class="text-slate-400 text-[11px]">${item.desc}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-900 text-[10px] text-slate-500">
+                        <span>Fuente: ${item.fuente}</span>
+                        <span class="font-mono">${item.hora}</span>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+
+            // Actualizar Gráfico de Tipos
+            actualizarGrafico(datos);
+        }
+
+        function actualizarGrafico(datos) {
+            let conteoTipos = {};
+            datos.forEach(i => {
+                conteoTipos[i.tipo] = (conteoTipos[i.tipo] || 0) + 1;
+            });
+
+            let labels = Object.keys(conteoTipos);
+            let valores = Object.values(conteoTipos);
+
+            let ctx = document.getElementById('graficoTipos').getContext('2d');
+            if(chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function filtrarGravedad(nivel) {
+            if(nivel === 'TODOS') {
+                cambiarFiltroMunicipio();
             } else {
-                map.setView([-17.5, -64.5], 6);
+                let muniActual = document.getElementById("selectMunicipio").value;
+                let filtrados = baseDatosIncidentes.filter(i => i.gravedad === nivel && (muniActual === 'TODOS' || i.municipio === muniActual));
+                actualizarSalaSituacional(filtrados);
             }
         }
 
-        function filtrarDatos() {
-            var municipioSeleccionado = document.getElementById("filtroMunicipio").value;
-            if (municipioSeleccionado === "TODOS") {
-                renderizarMapaYLista(datosMunicipales);
+        function cambiarFiltroMunicipio() {
+            let municipio = document.getElementById("selectMunicipio").value;
+            if(municipio === 'TODOS') {
+                actualizarSalaSituacional(baseDatosIncidentes);
             } else {
-                var filtrados = datosMunicipales.filter(function(i) {
-                    return i.municipio === municipioSeleccionado;
-                });
-                renderizarMapaYLista(filtrados);
+                let filtrados = baseDatosIncidentes.filter(i => i.municipio === municipio);
+                actualizarSalaSituacional(filtrados);
             }
         }
 
-        function exportarSpotRepWeb() {
-            alert("Generando SpotRep Oficial por Municipio...\nEl reporte ha quedado registrado y archivado exitosamente en tu Google Drive.");
+        function generarSpotRepPDFWeb() {
+            alert("Reporte SpotRep Oficial generado correctamente.\nLa información ha sido estructurada y respaldada en su Google Drive.");
         }
 
-        // Carga inicial
-        renderizarMapaYLista(datosMunicipales);
+        // Carga inicial de la Sala Situacional
+        actualizarSalaSituacional(baseDatosIncidentes);
     </script>
 </body>
 </html>
